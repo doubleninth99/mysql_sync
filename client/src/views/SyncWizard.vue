@@ -147,6 +147,28 @@ function copySql() {
   navigator.clipboard.writeText(sqlText.value)
   ElMessage.success('SQL 已复制到剪贴板')
 }
+
+function downloadSql() {
+  if (!sqlText.value) {
+    ElMessage.warning('没有可下载的 SQL')
+    return
+  }
+  
+  const blob = new Blob([sqlText.value], { type: 'text/plain;charset=utf-8' })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  
+  // Generate filename with timestamp
+  const now = new Date()
+  const timestamp = now.toISOString().replace(/[-:T.]/g, '').slice(0, 14)
+  link.download = `sync_script_${timestamp}.sql`
+  
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+  URL.revokeObjectURL(url)
+}
 </script>
 
 <template>
@@ -251,6 +273,10 @@ function copySql() {
               <el-icon><CopyDocument /></el-icon>
               复制
             </el-button>
+            <el-button @click="downloadSql" type="primary" size="small" class="copy-btn-header">
+              <el-icon><Download /></el-icon>
+              下载
+            </el-button>
           </div>
           <div class="sql-code-container">
             <SqlHighlight v-if="sqlText" :code="sqlText" />
@@ -262,10 +288,16 @@ function copySql() {
             <el-icon><Back /></el-icon>
             上一步
           </el-button>
-          <el-button type="success" @click="copySql" size="large">
-            <el-icon><CopyDocument /></el-icon>
-            复制 SQL
-          </el-button>
+          <div>
+            <el-button type="success" @click="copySql" size="large">
+              <el-icon><CopyDocument /></el-icon>
+              复制 SQL
+            </el-button>
+            <el-button type="primary" @click="downloadSql" size="large">
+              <el-icon><Download /></el-icon>
+              下载 SQL
+            </el-button>
+          </div>
         </div>
       </div>
     </div>
