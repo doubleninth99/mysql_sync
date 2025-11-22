@@ -15,6 +15,8 @@ const { getSchema } = require('./lib/schema-loader');
 const { compareSchemas } = require('./lib/comparator');
 const { generateSyncSQL } = require('./lib/sql-generator');
 
+const { encrypt, decrypt } = require('./lib/crypto');
+
 const CONNECTIONS_FILE = path.join(__dirname, 'connections.json');
 if (!fs.existsSync(CONNECTIONS_FILE)) {
     fs.writeFileSync(CONNECTIONS_FILE, '[]');
@@ -22,11 +24,22 @@ if (!fs.existsSync(CONNECTIONS_FILE)) {
 
 // Helper to read/write connections
 function getConnections() {
-    return JSON.parse(fs.readFileSync(CONNECTIONS_FILE, 'utf8'));
+    const data = fs.readFileSync(CONNECTIONS_FILE, 'utf8');
+    const connections = JSON.parse(data);
+    // Decrypt passwords for usage/display
+    return connections.map(conn => ({
+        ...conn,
+        password: decrypt(conn.password)
+    }));
 }
 
 function saveConnections(connections) {
-    fs.writeFileSync(CONNECTIONS_FILE, JSON.stringify(connections, null, 2));
+    // Encrypt passwords before saving
+    const encryptedConnections = connections.map(conn => ({
+        ...conn,
+        password: encrypt(conn.password)
+    }));
+    fs.writeFileSync(CONNECTIONS_FILE, JSON.stringify(encryptedConnections, null, 2));
 }
 
 // Routes
